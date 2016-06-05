@@ -12,4 +12,5 @@
 
 
 Плагин разработан сотрудниками  [Теплицы социальных технологий](https://te-st.ru/) в рамках хакатона [CrowdLab](https://crowd16.te-st.ru/)
- 
+
+!["Вот так вот это и выглядит" tag](https://github.com/Antonsrighthere/quotationbot/example.png) 
