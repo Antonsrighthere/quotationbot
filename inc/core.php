@@ -4,9 +4,9 @@ if(!defined('ABSPATH')) die; // Die if accessed directly
 class Tutbot_Core {
 	
 	private static $instance = NULL; //instance store
-			
+						
 	private function __construct() {
-				
+		
 		add_action('plugins_loaded', array($this, 'init'));
 		add_filter('gwptb_supported_commnds_list', array($this, 'custom_commands'), 20);
 	}
@@ -19,7 +19,7 @@ class Tutbot_Core {
 					
 		return self :: $instance;
     }     
-	
+
 	public function init(){
 		
 		if(!class_exists('Gwptb_Core'))
@@ -30,6 +30,8 @@ class Tutbot_Core {
 		if(is_admin()){
 			add_action( 'admin_init', array($this, 'settings_init'), 15);
 		}
+
+		add_filter('gwptb_supported_commnds_list', array($this, 'custom_commands'), 20);
 	}
 	
 	public function custom_post_types(){
@@ -104,6 +106,42 @@ class Tutbot_Core {
 			'supports'            => array('title', 'editor', 'author', 'excerpt', 'custom-fields'),
 			'taxonomies'          => array(),
 		));
+		
+		
+		register_post_type('atr_images', array(
+			'labels' => array(
+				'name'               => 'Рисунки',
+				'singular_name'      => 'Рисунок',
+				'menu_name'          => 'Рисунки',
+				'name_admin_bar'     => 'Добавить рисунок',
+				'add_new'            => 'Добавить новый',
+				'add_new_item'       => 'Добавить новый',
+				'new_item'           => 'Новый рисунок',
+				'edit_item'          => 'Редактировать рисунок',
+				'view_item'          => 'Просмотр рисунка',
+				'all_items'          => 'Все рисунки',
+				'search_items'       => 'Искать рисунки',
+				'parent_item_colon'  => 'Родительский рисунок:',
+				'not_found'          => 'Рисунки не найдены',
+				'not_found_in_trash' => 'В Корзине рисунки не найдены'
+		   ),
+			'public'              => true,
+			'exclude_from_search' => true,
+			'publicly_queryable'  => false,
+			'show_ui'             => true,
+			'show_in_nav_menus'   => false,
+			'show_in_menu'        => true,
+			'show_in_admin_bar'   => true,
+			//'query_var'           => true,
+			'capability_type'     => 'post',
+			'has_archive'         => false,
+			'rewrite'             => false,
+			'hierarchical'        => false,
+			'menu_position'       => 25,
+			//'menu_icon'           => 'dashicons-calendar',
+			'supports'            => array('title', 'editor', 'author'),
+			'taxonomies'          => array(),
+		));
 	}
 	
 	//bot logic 
@@ -111,6 +149,7 @@ class Tutbot_Core {
 		
 		$commands['q'] = 'tut_q_command_result';
 		$commands['m'] = 'tut_m_command_result';
+		$commands['i'] = 'tut_i_command_result';
 		
 		return $commands;
 	}

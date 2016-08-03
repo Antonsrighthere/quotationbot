@@ -39,6 +39,8 @@ if( !defined('PHP_VERSION') || version_compare(PHP_VERSION, '5.3.0', '<') ) {
 /** Init **/
 require_once(plugin_dir_path(__FILE__).'inc/core.php');
 require_once(plugin_dir_path(__FILE__).'inc/functions.php');
+require_once(plugin_dir_path(__FILE__).'inc/botan_io.php');
+require_once(plugin_dir_path(__FILE__).'inc/utils.php');
 
 
 Tutbot_Core::get_instance();
