@@ -1,15 +1,11 @@
 <?php
 /* Functions */
 
-
 function tut_m_command_result($upd_data){
-	
-
 	if(!isset($upd_data['command']) || $upd_data['command'] != 'm') { //no command in data
 		$result['text'] = apply_filters('gwptb_output_text', 'К сожалению, вы отправили неверный запрос.');
 		return $result;
 	}
-	
 	
 	$result = array();
 	$args = array();
@@ -34,7 +30,6 @@ function tut_m_command_result($upd_data){
 	//query
 	$query = new WP_Query($args);
 	
-
 	if($query->have_posts()){
 		$result['parse_mode'] = 'HTML';
 		$keys = array('inline_keyboard' => array());
@@ -77,25 +72,55 @@ function tut_m_command_result($upd_data){
 	return $result;
 }
 
+//images
+function tut_i_command_result($upd_data) {
+	if(!isset($upd_data['command']) || $upd_data['command'] != 'i') { //no command in data
+		$result['text'] = apply_filters('gwptb_output_text', 'К сожалению, вы отправили неверный запрос.');
+		return $result;
+	}
+
+	$result = array();
+	
+	$attaches = new WP_Query(array(
+			'post_type' => 'attachment',
+			'post_status' => 'any',
+			'orderby' => 'rand',
+			'posts_per_page' => 1,
+			'post_parent' => 3111,
+		)
+	);
+	if ($attaches->have_posts()) {
+		foreach ($attaches->posts as $attach) {
+			send_attach($upd_data['chat_id'], $attach->ID);
+			$result['text'] = '';
+		}
+	}
+	else {
+		$result['text'] = 'К сожалению, по вашему запросу ничего не найдено.';
+	}
+
+	$donation_url = Tutbot_Core::get_donation_url();
+	if(!empty($donation_url)) {
+		$keys['inline_keyboard'][][] = array('text' => 'Сделать пожертвование', 'url' => 'http://outfundspb.ru/wp/#help');
+	}
+	$result['reply_markup'] = json_encode($keys);
+	
+	return $result;
+}
 
 //quotes
-function tut_q_command_result($upd_data){
-	//add command param to $upd_data
-	
-	//$result['text'] = 'command '.$upd_data['command']; return$result;
-	
+function tut_q_command_result($upd_data) {
 	if(!isset($upd_data['command']) || $upd_data['command'] != 'q') { //no command in data
 		$result['text'] = apply_filters('gwptb_output_text', 'К сожалению, вы отправили неверный запрос.');
 		return $result;
 	}
-	
 	
 	$result = array();
 	$args = array();
 	$per_page = 2;
 	$s = '';
 	
-	if(false !== strpos($upd_data['content'], 'next=')){ //update
+	if(false !== strpos($upd_data['content'], 'next=')) { //update
 		//more random 
 		$args = array(
 			'post_type' => 'quote',
@@ -108,7 +133,7 @@ function tut_q_command_result($upd_data){
 		//more search
 		parse_str($upd_data['content'], $a);
 			
-		if(isset($a['q']) && isset($a['paged'])){
+		if(isset($a['q']) && isset($a['paged'])) {
 			$args = array(
 				'post_type' => 'quote',
 				'posts_per_page' => $per_page,
@@ -118,14 +143,13 @@ function tut_q_command_result($upd_data){
 			
 		}
 	}
-	else{
-				
+	else {
 		//have search term
 		$self = Gwptb_Self::get_instance();
 		$s = apply_filters('gwptb_search_term', str_replace(array('@', '/q', $self->get_self_username()), '', $upd_data['content']));
 			
 		
-		if(!empty($s)){ //initial search
+		if(!empty($s)) { //initial search
 			$args = array(
 				'post_type' => 'quote',
 				'posts_per_page' => $per_page,
@@ -133,7 +157,7 @@ function tut_q_command_result($upd_data){
 				'paged' => 1
 			);
 		}
-		else{ //random quote
+		else { //random quote
 			$args = array(
 				'post_type' => 'quote',
 				'posts_per_page' => 1,
@@ -142,16 +166,14 @@ function tut_q_command_result($upd_data){
 		}
 	}
 	
-	
 	//query
 	$query = new WP_Query($args);
 	
-
-	if($query->have_posts()){
+	if($query->have_posts()) {
 		$result['parse_mode'] = 'HTML';
 		$keys = array('inline_keyboard' => array());
 		
-		if(isset($args['s'])){ //search results buttons
+		if(isset($args['s'])) { //search results buttons
 			//list
 			$paged = $args['paged'];
 			if($query->found_posts > $per_page){
@@ -164,7 +186,7 @@ function tut_q_command_result($upd_data){
 			
 			$result['text'] .= tut_format_quotes_list($query->posts);
 			$result['text'] = apply_filters('gwptb_output_html', $result['text']);
-			
+
 			//nex/prev keys
 			if($paged > 1){
 				$keys['inline_keyboard'][0][] = array('text' => 'Пред.', 'callback_data' => 'q='.$s.'&paged='.($paged-1));				
@@ -174,11 +196,11 @@ function tut_q_command_result($upd_data){
 				$keys['inline_keyboard'][0][] = array('text' => 'След.', 'callback_data' => 'q='.$s.'&paged='.($paged+1));		
 			}
 		}
-		else{ //random quote button			
+		else { //random quote button			
 				
 			$p = reset($query->posts);
 			
-			$result['text'] = ''; //sprintf('# %d. ', $p->ID);
+			$result['text'] = ''; 
 			$result['text'] .= $p->post_content;
 			$result['text'] = apply_filters('gwptb_output_text', $result['text']);
 			
@@ -191,64 +213,52 @@ function tut_q_command_result($upd_data){
 			$keys['inline_keyboard'][][] = array('text' => 'Сделать пожертвование', 'url' => 'http://outfundspb.ru/wp/#help');
 		}
 		
-		
 		//add buttons
 
 		$result['reply_markup'] = json_encode($keys);
 	}
-	else{
-		$result['text'] = 'К сожалению, по вашему запросу ничего не найдено.';
-		$result['text'] = apply_filters('gwptb_output_text', $result['text']);
+	else {
+		$result = handle_quote_not_found($upd_data);
 	}
-	
-	
 	
 	return $result;
 }
 
+function handle_quote_not_found($upd_data) {	
+	$result = array();
+	$args = array(
+				'post_type' => 'atr_images',
+				'posts_per_page' => 1,
+				'orderby' => 'rand'
+			);
+	
+	//query
+	$query = new WP_Query($args);
+	
+	if($query->have_posts()) {	
+		foreach ($query->posts as $post) {
+			$attaches = new WP_Query(array(
+					'post_type' => 'attachment',
+					'post_status' => 'any',
+					'posts_per_page' => 1,
+					'post_parent' => $post->ID,
+				)
+			);
+			if ($attaches->have_posts()) {
+				foreach ($attaches->posts as $attach) {
+					send_attach($upd_data['chat_id'], $attach->ID);
+					$result['text'] = '';
+				}
+			}
+		}
+	}
+	$result['text'] = $post->post_title;
 
-function tut_format_quotes_list($posts){
-	
-	$out = '';
-	
-	foreach($posts as $p){
-		$out .= $p->post_content.chr(10).chr(10);		
-	} 
-	
-	return $out;
-}
+	$donation_url = Tutbot_Core::get_donation_url();
+	if(!empty($donation_url)) {
+		$keys['inline_keyboard'][][] = array('text' => 'Сделать пожертвование', 'url' => 'http://outfundspb.ru/wp/#help');
+	}
+	$result['reply_markup'] = json_encode($keys);
 
-function tut_format_places_list($posts){
-	
-	$out = '';
-	
-	foreach($posts as $p){
-		
-		if(empty($p->post_excerpt))
-			continue;
-		
-	
-		$map_link = tut_get_map_link($p);
-		$map_link = (!empty($map_link)) ? ' '.tut_get_map_link($p) : '';
-		
-		$out .= $p->post_title.chr(10);
-		$out .= $p->post_excerpt.$map_link.chr(10);
-		$out .= $p->post_content.chr(10).chr(10);
-	} 
-	
-	return $out;
-}
-
-function tut_get_map_link($p){
-	
-	$lat = (float)get_post_meta($p->ID, 'lat', true);
-	$lon = (float)get_post_meta($p->ID, 'lon', true);
-	
-	if(empty($lat)||empty($lon))
-		return '';
-	
-	$map = 'http://www.google.com/maps/place/'.$lat.','.$lon;
-	$map_link = "<a href='{$map}'>[карта]</a>";
-	
-	return $map_link;
+	return $result;
 }
